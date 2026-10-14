@@ -33,4 +33,22 @@ t() {
     b=$?
 
     if cmp -s "$O/m.txt" "$O/l.txt" && [ "$a" -eq "$b" ]; then
-        echo "OK   [$
+        echo "OK   [$1]"
+    else
+        echo "FAIL [$1] exit: myls=$a ls=$b"
+        diff "$O/m.txt" "$O/l.txt"
+    fi
+}
+
+t "-t"
+t "-tr"
+t "-S"
+t "-Sr"
+t "-u"
+t "-tu"
+t "-tc"
+t "-tuc"
+t "-tcu"
+t "-tS"
+t "-St"
+t "-f"
