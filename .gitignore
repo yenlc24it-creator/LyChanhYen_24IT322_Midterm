@@ -1,0 +1,12 @@
+
+# Compiled binary
+# Misc
+# Object files
+*.core
+*.o
+*.swp
+*~
+core
+myls
+myls_asan
+myls_ubsan
