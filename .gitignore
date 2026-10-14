@@ -1,12 +1,19 @@
-
-# Compiled binary
-# Misc
-# Object files
-*.core
+# Compiled files
 *.o
-*.swp
-*~
-core
+*.out
 myls
-myls_asan
-myls_ubsan
+ls
+
+# Debug files
+core
+core.*
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating system files
+.DS_Store
+Thumbs.db
