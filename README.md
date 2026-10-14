@@ -1,131 +1,168 @@
 # Lệnh `ls` của UNIX
-Bài thi giữa kỳ: lập trình lại lệnh `ls(1)` bằng ngôn ngữ C, theo trang manual `ls(1)` của NetBSD 10.1. Dự án giúp hiểu các thao tác trên hệ thống tập tin UNIX và lập trình ở mức hệ thống.
+
+Bài tập giữa kỳ môn Lập trình hệ thống: xây dựng chương trình `myls` bằng ngôn ngữ C, mô phỏng lệnh `ls(1)` của UNIX theo trang manual NetBSD 10.1 do giảng viên cung cấp. Dự án giúp tìm hiểu các thao tác trên hệ thống tập tin UNIX và lập trình ở mức hệ thống.
 
 ## Thông tin sinh viên
 
-- **Sinh viên:** Nguyễn Phúc Phi
-- **MSSV:** 24IT200
-- **Môn học:** Lập trình hệ thống 
-- **GitHub:** https://github.com/nguyenphucphi2102/NguyenPhucPhi_24IT200_midterm
+- **Sinh viên:** Lý Chánh Yên
+- **MSSV:** 24IT322
+- **Môn học:** Lập trình hệ thống
+- **GitHub:** https://github.com/yenlc24it-creator/LyChanhYen_24IT322_Midterm
 
 ## Môi trường phát triển
 
-- Hệ điều hành: NetBSD 10.1 (amd64), chạy trong máy ảo VirtualBox, truy cập bằng SSH
-- Trình biên dịch: `cc` (GCC 10.5.0)
-- Công cụ build: `make` (BSD make của NetBSD; Makefile cũng chạy được với GNU make)
-- Quản lý mã nguồn: Git
+- **Ngôn ngữ lập trình:** C
+- **Hệ điều hành:** NetBSD 10.1 (amd64), chạy trong máy ảo VirtualBox và truy cập bằng SSH (xác nhận lại nếu bạn sử dụng đúng môi trường này).
+- **Trình biên dịch:** `cc` (GCC 10.5.0) (xác nhận phiên bản thực tế).
+- **Công cụ build:** `make` thông qua Makefile.
+- **Quản lý mã nguồn:** Git và GitHub.
 
 ## Biên dịch và chạy
 
-    git clone https://github.com/nguyenphucphi2102/NguyenPhucPhi_24IT200_midterm.git
-    cd NguyenPhucPhi_24IT200_midterm
-    make            # tạo file thực thi ./myls
-    ./myls          # liệt kê thư mục hiện tại
-    make clean      # xóa file thực thi và các file .o
+Tải dự án về máy:
 
-Chương trình có tên `myls` để không trùng với `/bin/ls` của hệ thống. Phải gõ `./myls` (có `./`) khi chạy.
+```bash
+git clone https://github.com/yenlc24it-creator/LyChanhYen_24IT322_Midterm.git
+cd LyChanhYen_24IT322_Midterm
+```
+
+Biên dịch chương trình:
+
+```bash
+make clean
+make
+```
+
+Chạy chương trình:
+
+```bash
+./myls
+```
+
+Một số lệnh sử dụng:
+
+```bash
+./myls -l
+./myls -la
+./myls -lh
+./myls -R
+./myls -lS
+```
+
+Xóa các file được tạo trong quá trình biên dịch:
+
+```bash
+make clean
+```
+
+Chương trình sử dụng tên `myls` để tránh trùng với lệnh `ls` có sẵn của hệ thống.
 
 ## Cấu trúc dự án
 
-    .
-    ├── Makefile      # biên dịch dự án
-    ├── README.md     # báo cáo này
-    ├── .gitignore    # loại trừ file thực thi và file .o
-    ├── ls.h          # struct options: toàn bộ cờ dòng lệnh
-    ├── main.c        # xử lý operand, đệ quy -R, điều khiển luồng chính
-    ├── options.c/.h  # phân tích option bằng getopt
-    ├── entry.c/.h    # danh sách entry, stat/lstat, đọc thư mục
-    ├── sort.c/.h     # sắp xếp: tên, -t, -S, -r, -f
-    ├── print.c/.h    # in kết quả: -i -s -F -q -w -l, dòng total
-    ├── format.c/.h   # chọn loại thời gian, BLOCKSIZE, kích thước dễ đọc, ký hiệu -F
-    ├── longfmt.c/.h  # định dạng dài: mode, ngày giờ, tên owner/group
-    ├── util.c/.h     # cấp phát bộ nhớ an toàn, nối đường dẫn, báo lỗi
-    └── tests/        # các script shell so sánh myls với ls thật
+```text
+.
+├── Makefile
+├── README.md
+├── .gitignore
+├── ls.h
+├── main.c
+├── options.c
+├── options.h
+├── entry.c
+├── entry.h
+├── sort.c
+├── sort.h
+├── print.c
+├── print.h
+├── format.c
+├── format.h
+├── longfmt.c
+├── longfmt.h
+├── util.c
+├── util.h
+└── tests/
+```
 
-Chương trình tự cài đặt mọi chức năng, không dùng `strmode(3)`, `humanize_number(3)` hay `getbsize(3)`.
+Các module được phân chia theo chức năng để dễ quản lý, bảo trì và kiểm thử. Cấu trúc trên cần được đối chiếu với các file thực tế trong repository.
 
-## Các tính năng đã cài đặt
+## Các tùy chọn được hỗ trợ
 
-Hỗ trợ đủ các option trong trang manual được cung cấp: `-AacdFfhiklnqRrSstuw`.
+Chương trình hướng đến việc triển khai các tùy chọn theo manual `ls(1)` của NetBSD 10.1.
 
-| Option | Chức năng |
-|--------|-----------|
-| `-A` | Liệt kê mọi entry trừ `.` và `..`. Luôn bật khi chạy bằng root |
-| `-a` | Bao gồm cả entry bắt đầu bằng dấu chấm |
-| `-c` | Dùng thời gian đổi trạng thái (ctime) để sắp xếp (`-t`) hoặc in (`-l`) |
-| `-d` | Thư mục được liệt kê như file thường; symlink ở operand không bị đi xuyên qua |
-| `-F` | Thêm ký hiệu: `/` thư mục, `*` thực thi, `@` symlink, `%` whiteout, `=` socket, `\|` FIFO |
-| `-f` | Không sắp xếp |
-| `-h` | Kích thước dạng dễ đọc (B, K, M, G...) cho `-s` và `-l`. Ghi đè `-k` |
-| `-i` | In số inode |
-| `-k` | Số block tính theo đơn vị kilobyte. Ghi đè `-h` |
-| `-l` | Định dạng dài (mode, số link, owner, group, kích thước, thời gian, tên) |
-| `-n` | Như `-l` nhưng owner và group hiển thị dạng số |
-| `-q` | In `?` thay cho ký tự không in được (mặc định khi xuất ra terminal) |
-| `-R` | Liệt kê đệ quy thư mục con (không đi theo symlink) |
-| `-r` | Đảo ngược thứ tự sắp xếp |
-| `-S` | Sắp xếp theo kích thước, lớn nhất trước |
-| `-s` | Hiển thị số block đã dùng của mỗi file |
-| `-t` | Sắp xếp theo thời gian sửa đổi, mới nhất trước |
-| `-u` | Dùng thời gian truy cập (atime) thay cho thời gian sửa đổi |
-| `-w` | In nguyên dạng ký tự không in được (mặc định khi xuất ra pipe hoặc file) |
+| Tùy chọn | Chức năng |
+|---|---|
+| `-A` | Liệt kê các mục ẩn, ngoại trừ `.` và `..`. |
+| `-a` | Bao gồm các mục có tên bắt đầu bằng dấu chấm. |
+| `-c` | Sử dụng thời gian thay đổi trạng thái file cho việc sắp xếp hoặc hiển thị phù hợp. |
+| `-d` | Liệt kê thư mục như một mục thông thường, không duyệt nội dung. |
+| `-F` | Thêm ký hiệu nhận biết loại file. |
+| `-f` | Không sắp xếp danh sách. |
+| `-h` | Hiển thị kích thước theo định dạng dễ đọc cho `-s` và `-l`. |
+| `-i` | Hiển thị số inode. |
+| `-k` | Hiển thị số block theo đơn vị kilobyte. |
+| `-l` | Hiển thị thông tin file ở định dạng dài. |
+| `-n` | Hiển thị UID và GID dạng số trong định dạng dài. |
+| `-q` | Thay ký tự không in được trong tên file bằng `?`. |
+| `-R` | Liệt kê đệ quy các thư mục con. |
+| `-r` | Đảo ngược thứ tự sắp xếp. |
+| `-S` | Sắp xếp theo kích thước file, lớn nhất trước. |
+| `-s` | Hiển thị số block mà file sử dụng. |
+| `-t` | Sắp xếp theo thời gian sửa đổi, mới nhất trước. |
+| `-u` | Sử dụng thời gian truy cập thay cho thời gian sửa đổi khi phù hợp. |
+| `-w` | Hiển thị nguyên dạng ký tự không in được trong tên file. |
 
-### Hành vi theo trang manual
+Danh sách trên mô tả phạm vi tính năng mục tiêu. Khả năng hoạt động thực tế của từng tùy chọn cần được xác nhận bằng kiểm thử.
 
-- Không có operand: liệt kê thư mục hiện tại. Nhiều operand: các operand không phải thư mục in trước, sau đó đến các thư mục; mỗi nhóm sắp xếp riêng theo thứ tự từ điển.
-- Các cặp option ghi đè nhau, cái đứng sau thắng: `-l`/`-n`, `-c`/`-u`, `-q`/`-w`, `-R`/`-d`, `-h`/`-k`.
-- Định dạng dài hiển thị thêm dòng `total` cho mỗi thư mục. Symlink hiển thị dạng `tên -> đích`. File thiết bị hiển thị `major, minor` ở cột kích thước.
-- Cột thời gian: hiển thị `Tháng Ngày Giờ:Phút` với file trong vòng sáu tháng, ngược lại hiển thị `Tháng Ngày Năm`.
-- Biến môi trường `BLOCKSIZE` được dùng để tính số block (khi không có `-h` và `-k`); `TZ` ảnh hưởng đến cách hiển thị ngày giờ.
-- Mã thoát là 0 nếu thành công, lớn hơn 0 nếu có lỗi.
+## Hành vi theo manual
 
-## Ví dụ sử dụng
+- Khi không có operand, chương trình liệt kê nội dung thư mục hiện tại.
+- Khi có nhiều operand, các mục không phải thư mục được xử lý trước các thư mục.
+- Tùy chọn có thể được kết hợp, ví dụ `-la`, `-lh` và `-siF`.
+- Một số tùy chọn ghi đè lẫn nhau theo thứ tự xuất hiện trên dòng lệnh.
+- Định dạng dài có thể bao gồm quyền truy cập, số liên kết, chủ sở hữu, nhóm, kích thước, thời gian và tên file.
+- Các tùy chọn về thời gian và kích thước ảnh hưởng đến cách sắp xếp hoặc hiển thị.
+- Chương trình cần xử lý các lỗi như operand không tồn tại hoặc không thể truy cập thư mục.
 
-    ./myls                      # thư mục hiện tại
-    ./myls -l                   # định dạng dài
-    ./myls -la                  # dạng dài, gồm cả file ẩn
-    ./myls -lh /etc             # kích thước dễ đọc
-    ./myls -ltr                 # theo thời gian sửa đổi, cũ nhất trước
-    ./myls -lS                  # theo kích thước, lớn nhất trước
-    ./myls -ltu                 # sắp xếp theo thời gian truy cập
-    ./myls -R /etc              # đệ quy
-    ./myls -ld /etc /tmp        # liệt kê thư mục như file
-    ./myls -siF                 # inode, block, ký hiệu loại file
-    ./myls file /tmp /etc       # file in trước, thư mục in sau
-    ./myls /nonexistent         # báo lỗi, mã thoát lớn hơn 0
+## Thiết kế chương trình
 
-## Thiết kế
-
-- **Modular:** mỗi module làm một việc (phân tích option, đọc thư mục, sắp xếp, in, định dạng) và có file header riêng.
-- **Sắp xếp:** dùng `qsort()` với các hàm so sánh theo tên, thời gian (chọn bởi `-c`/`-u`), kích thước. Khi bằng nhau thì so sánh tên.
-- **Bộ nhớ:** danh sách entry là mảng tự mở rộng; mọi cấp phát đều qua `xmalloc`/`xrealloc` (thoát khi hết bộ nhớ), và được giải phóng trước khi kết thúc.
-- **Căn cột:** mỗi thư mục được quét hai lượt: lượt đầu tính độ rộng lớn nhất của từng cột, lượt hai mới in.
-- **Lỗi:** mọi lỗi được in ra stderr dạng `ls: <đường dẫn>: <lý do>`, chương trình tiếp tục xử lý các mục còn lại và trả mã thoát 1 ở cuối.
+- **`main.c`:** Điều khiển luồng thực thi chính và xử lý các operand.
+- **`options.c` / `options.h`:** Phân tích các tùy chọn dòng lệnh.
+- **`entry.c` / `entry.h`:** Đọc thông tin các mục trong thư mục.
+- **`sort.c` / `sort.h`:** Thực hiện sắp xếp danh sách.
+- **`print.c` / `print.h`:** Xuất thông tin ra màn hình.
+- **`format.c` / `format.h`:** Định dạng kích thước và các thông tin liên quan.
+- **`longfmt.c` / `longfmt.h`:** Xử lý định dạng thông tin file chi tiết.
+- **`util.c` / `util.h`:** Cung cấp các hàm tiện ích dùng chung.
 
 ## Kiểm thử
 
-Chương trình được so sánh với `ls` của chính NetBSD 10.1 trên máy ảo, bằng các script shell: mỗi phép thử chạy cả `myls` và `ls -1` với cùng đối số rồi so sánh nội dung xuất ra và mã thoát. Các nhóm đã thử:
+Các trường hợp cần kiểm tra bao gồm:
 
-- Từng option đơn và các tổ hợp (`-la`, `-lh`, `-lt`, `-lS`, `-lsi`, `-Rl`...).
-- Các cặp option ghi đè nhau theo cả hai thứ tự.
-- Sắp xếp với thời gian và kích thước trùng nhau.
-- Số block với các giá trị `BLOCKSIZE` khác nhau, kích thước dễ đọc ở các mốc 999, 1000, 1023, 1024 byte.
-- Định dạng dài: các bit setuid, setgid, sticky; symlink (kể cả symlink hỏng); FIFO; file thiết bị; hard link; file nằm sát mốc sáu tháng và file có thời gian ở tương lai.
-- Đệ quy với thư mục lồng nhau, thư mục ẩn, thư mục rỗng, symlink tới thư mục, thư mục không có quyền đọc.
-- Trường hợp biên: tên file có dấu cách, tab, xuống dòng, ký tự điều khiển, byte không phải ASCII, tên bắt đầu bằng `-`, tên dài 250 ký tự, thư mục chứa 2000 file, đường dẫn sâu 40 cấp, operand không tồn tại, `--`, option sai.
+1. Liệt kê thư mục hiện tại và thư mục được chỉ định.
+2. Hiển thị file ẩn bằng `-a` và `-A`.
+3. Hiển thị thông tin chi tiết bằng `-l`.
+4. Hiển thị kích thước bằng `-h` và số block bằng `-s`.
+5. Sắp xếp theo tên, thời gian và kích thước.
+6. Liệt kê đệ quy bằng `-R`.
+7. Xử lý symbolic link và các loại file khác.
+8. Xử lý operand không tồn tại và các trường hợp lỗi.
+9. Kiểm tra tổ hợp tùy chọn và thứ tự ghi đè.
 
-Không có phép thử nào làm chương trình bị crash. Chương trình cũng được biên dịch với AddressSanitizer và UndefinedBehaviorSanitizer và chạy trên các thư mục thử; không phát hiện lỗi bộ nhớ.
-
-Các script nằm trong thư mục `tests/` (`t1.sh` đến `t6.sh` và `t8.sh`). Chúng dùng đường dẫn tuyệt đối của máy ảo (`$HOME/NguyenPhucPhi_24IT00_midterm/myls`), nên chạy trực tiếp được trên máy ảo của tác giả; muốn chạy ở nơi khác thì cần sửa biến `M` ở đầu mỗi script. Ví dụ: `sh tests/t2.sh` (toàn bộ dòng `OK` nghĩa là kết quả giống `ls` thật).
+Nếu repository có các script trong thư mục `tests/`, có thể sử dụng chúng để kiểm tra chương trình. Chỉ ghi kết quả kiểm thử là thành công sau khi đã chạy thực tế.
 
 ## Hạn chế
 
-- Không hỗ trợ output màu hoặc các option ngoài danh sách trong manual (ví dụ `--color`).
-- Không hỗ trợ locale đa ngôn ngữ cho tên tháng; dùng theo cấu hình hệ thống.
+Các hạn chế sẽ được cập nhật sau khi hoàn thành kiểm thử, bao gồm những tùy chọn chưa hỗ trợ, khác biệt so với manual và các trường hợp chưa xử lý đầy đủ.
+
+## Kết luận
+
+Dự án tập trung vào việc vận dụng ngôn ngữ C để thao tác với hệ thống tập tin UNIX, xử lý thông tin file, phân tích tham số dòng lệnh và tổ chức chương trình thành nhiều module.
 
 ## Tài liệu tham khảo
 
-- Trang manual `ls(1)`, NetBSD 10.1 (27/10/2024), file `ls.pdf` do giảng viên cung cấp.
-- Các trang manual `stat(2)`, `getopt(3)`, `opendir(3)`, `readdir(3)`, `getpwuid(3)`, `getgrgid(3)`, `strftime(3)`.
+- NetBSD 10.1, `ls(1)`, General Commands Manual, tài liệu được cung cấp trong bài tập.
+- Các trang manual liên quan đến những hàm hệ thống được sử dụng trong chương trình.
 
+## Repository
 
+https://github.com/yenlc24it-creator/LyChanhYen_24IT322_Midterm
