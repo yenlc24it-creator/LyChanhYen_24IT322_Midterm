@@ -1,8 +1,9 @@
-# Makefile for the simplified ls(1) (works with BSD make and GNU make)
 PROG = myls
-OBJS = main.o options.o entry.o sort.o print.o util.o format.o longfmt.o
-CC = cc
-CFLAGS = -Wall -Wextra -O2
+SRCS = main.c options.c entry.c sort.c print.c util.c format.c longfmt.c
+OBJS = ${SRCS:.c=.o}
+
+CC ?= cc
+CFLAGS += -Wall -Wextra -O2
 
 all: $(PROG)
 
@@ -10,9 +11,9 @@ $(PROG): $(OBJS)
 	$(CC) $(CFLAGS) -o $(PROG) $(OBJS)
 
 .c.o:
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) -c $< -o $@
 
-main.o: main.c ls.h options.h entry.h sort.h print.h util.h
+main.o: ls.h options.h entry.h sort.h print.h util.h
 options.o: options.c options.h ls.h
 entry.o: entry.c entry.h ls.h util.h
 sort.o: sort.c sort.h entry.h ls.h format.h
